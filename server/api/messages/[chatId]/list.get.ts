@@ -12,6 +12,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const messagesList = await messageRepository.findMessagesChats(chatId);
+    messagesList.reverse();
 
     return {
       success: true,

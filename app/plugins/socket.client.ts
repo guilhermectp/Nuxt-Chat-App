@@ -11,7 +11,7 @@ export function getSocket(): Socket | null {
 export default defineNuxtPlugin(() => {
   if (import.meta.client) {
     const config = useRuntimeConfig();
-    const socketUrl = config.public.socketUrl;
+    const socketUrl = config.SOCKET_URL;
 
     console.log(`🔌 Conectando Socket.IO em: ${socketUrl}`);
 
