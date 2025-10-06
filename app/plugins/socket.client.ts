@@ -12,6 +12,7 @@ export default defineNuxtPlugin(() => {
   if (import.meta.client) {
     const config = useRuntimeConfig();
     const socketUrl = config.SOCKET_URL;
+    console.log("Socket URL", socketUrl);
 
     console.log(`🔌 Conectando Socket.IO em: ${socketUrl}`);
 
