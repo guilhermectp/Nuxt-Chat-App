@@ -217,12 +217,15 @@ export default async (nitroApp: NitroApp) => {
     if (!io && event.node.req.socket) {
       try {
         const reqSocket = event.node.req.socket as any;
+        const config = useRuntimeConfig();
+        const socketUrl = config.SOCKET_URL;
+        console.log("Socket URL BACK", socketUrl || "http://localhost:3000");
 
         if (reqSocket.server) {
           console.log("🔌 Anexando ao servidor HTTP do Nitro");
           io = new SocketIOServer(reqSocket.server, {
             cors: {
-              origin: ["http://localhost:3000"],
+              origin: [socketUrl],
               methods: ["GET", "POST"],
               credentials: true,
             },

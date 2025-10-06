@@ -21,6 +21,6 @@ export default defineNuxtConfig({
     JWT_SECRET: process.env.JWT_SECRET,
     MONGODB_URI: process.env.MONGODB_URI,
     NODE_ENV: "development",
-    SOCKET_URL: process.env.HOMOLOG_URL || "http://localhost:3000",
+    SOCKET_URL: process.env.HOMOLOG_URL,
   },
 });
