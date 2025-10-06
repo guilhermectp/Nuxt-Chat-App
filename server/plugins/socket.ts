@@ -213,7 +213,10 @@ export default async (nitroApp: NitroApp) => {
   console.log("⚡ Inicializando Socket.IO...");
 
   // Método 1: Tentar usar o servidor HTTP do Nitro
+  console.log("ANTES DO NITRO HOOK");
+
   nitroApp.hooks.hook("request", async (event) => {
+    console.log("PÓS NITRO HOOK");
     if (!io && event.node.req.socket) {
       try {
         const reqSocket = event.node.req.socket as any;
