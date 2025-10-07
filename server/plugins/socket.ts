@@ -209,70 +209,36 @@ export function getSocketIO(): SocketIOServer | null {
   return io;
 }
 
-export default async (nitroApp: NitroApp) => {
+export default defineNitroPlugin((nitroApp) => {
   console.log("⚡ Inicializando Socket.IO...");
 
-  // Método 1: Tentar usar o servidor HTTP do Nitro
-  console.log("ANTES DO NITRO HOOK");
+  // Aguardar o servidor estar pronto
+  nitroApp.hooks.hook("request", (event) => {
+    if (io) return; // Já configurado
 
-  nitroApp.hooks.hook("request", async (event) => {
-    console.log("PÓS NITRO HOOK");
-    if (!io && event.node.req.socket) {
-      try {
-        const reqSocket = event.node.req.socket as any;
-        const config = useRuntimeConfig();
-        const socketUrl = config.SOCKET_URL;
-        console.log("Socket URL BACK", socketUrl || "http://localhost:3000");
+    const reqSocket = event.node.req.socket as any;
+    if (!reqSocket?.server) return;
 
-        if (reqSocket.server) {
-          console.log("🔌 Anexando ao servidor HTTP do Nitro");
-          io = new SocketIOServer(reqSocket.server, {
-            cors: {
-              origin: [socketUrl],
-              methods: ["GET", "POST"],
-              credentials: true,
-            },
-            transports: ["websocket", "polling"],
-          });
+    console.log("🔌 Configurando Socket.IO");
 
-          // Configurar handlers do Socket.IO
-          setupSocketHandlers(io);
-          console.log("✅ Socket.IO configurado no servidor Nitro");
-          return;
-        }
-      } catch (error) {
-        console.log(
-          "⚠️ Falhou no servidor Nitro, criando servidor separado..."
-        );
-      }
-    }
+    const config = useRuntimeConfig();
+
+    io = new SocketIOServer(reqSocket.server, {
+      cors: {
+        origin:
+          process.env.NODE_ENV === "production"
+            ? [config.SOCKET_URL || "*"]
+            : ["http://localhost:3000"],
+        methods: ["GET", "POST"],
+        credentials: true,
+      },
+      transports: ["websocket", "polling"],
+    });
+
+    setupSocketHandlers(io);
+    console.log("✅ Socket.IO configurado");
   });
 
-  // Método 2: Servidor separado na porta 3001
-  // setTimeout(() => {
-  //   if (!io) {
-  //     console.log("🔄 Criando servidor Socket.IO na porta 3001...");
-  //     const httpServer = createServer();
-
-  //     io = new SocketIOServer(httpServer, {
-  //       cors: {
-  //         origin: ["http://localhost:3000"],
-  //         methods: ["GET", "POST"],
-  //         credentials: true,
-  //       },
-  //       transports: ["websocket", "polling"],
-  //     });
-
-  //     // Configurar handlers
-  //     setupSocketHandlers(io);
-
-  //     httpServer.listen(3001, () => {
-  //       console.log("🚀 Socket.IO rodando na porta 3001");
-  //     });
-  //   }
-  // }, 1000);
-
-  // Cleanup
   nitroApp.hooks.hook("close", async () => {
     if (io) {
       io.close();
@@ -280,7 +246,80 @@ export default async (nitroApp: NitroApp) => {
       console.log("🔴 Socket.IO fechado");
     }
   });
-};
+});
+
+// export default async (nitroApp: NitroApp) => {
+//   console.log("⚡ Inicializando Socket.IO...");
+
+//   // Método 1: Tentar usar o servidor HTTP do Nitro
+//   console.log("ANTES DO NITRO HOOK");
+
+//   nitroApp.hooks.hook("request", async (event) => {
+//     console.log("PÓS NITRO HOOK");
+//     if (!io && event.node.req.socket) {
+//       try {
+//         const reqSocket = event.node.req.socket as any;
+//         const config = useRuntimeConfig();
+//         const socketUrl = config.SOCKET_URL;
+//         console.log("Socket URL BACK", socketUrl || "http://localhost:3000");
+
+//         if (reqSocket.server) {
+//           console.log("🔌 Anexando ao servidor HTTP do Nitro");
+//           io = new SocketIOServer(reqSocket.server, {
+//             cors: {
+//               origin: [socketUrl],
+//               methods: ["GET", "POST"],
+//               credentials: true,
+//             },
+//             transports: ["websocket", "polling"],
+//           });
+
+//           // Configurar handlers do Socket.IO
+//           setupSocketHandlers(io);
+//           console.log("✅ Socket.IO configurado no servidor Nitro");
+//           return;
+//         }
+//       } catch (error) {
+//         console.log(
+//           "⚠️ Falhou no servidor Nitro, criando servidor separado..."
+//         );
+//       }
+//     }
+//   });
+
+//   // Método 2: Servidor separado na porta 3001
+//   // setTimeout(() => {
+//   //   if (!io) {
+//   //     console.log("🔄 Criando servidor Socket.IO na porta 3001...");
+//   //     const httpServer = createServer();
+
+//   //     io = new SocketIOServer(httpServer, {
+//   //       cors: {
+//   //         origin: ["http://localhost:3000"],
+//   //         methods: ["GET", "POST"],
+//   //         credentials: true,
+//   //       },
+//   //       transports: ["websocket", "polling"],
+//   //     });
+
+//   //     // Configurar handlers
+//   //     setupSocketHandlers(io);
+
+//   //     httpServer.listen(3001, () => {
+//   //       console.log("🚀 Socket.IO rodando na porta 3001");
+//   //     });
+//   //   }
+//   // }, 1000);
+
+//   // Cleanup
+//   nitroApp.hooks.hook("close", async () => {
+//     if (io) {
+//       io.close();
+//       io = null;
+//       console.log("🔴 Socket.IO fechado");
+//     }
+//   });
+// };
 
 function setupSocketHandlers(io: SocketIOServer) {
   io.on("connection", (socket) => {
