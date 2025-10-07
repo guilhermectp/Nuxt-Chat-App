@@ -201,6 +201,7 @@ import { IChat } from "./../types/chat.type";
 import { Server as SocketIOServer } from "socket.io";
 import { createServer } from "http";
 import type { NitroApp } from "nitropack";
+const config = useRuntimeConfig();
 
 let io: SocketIOServer | null = null;
 
@@ -212,16 +213,16 @@ export function getSocketIO(): SocketIOServer | null {
 export default defineNitroPlugin((nitroApp) => {
   console.log("⚡ Inicializando Socket.IO...");
 
+  console.log("Antes do NitroHook", config.SOCKET_URL);
   // Aguardar o servidor estar pronto
   nitroApp.hooks.hook("request", (event) => {
+    console.log("Após NitroHook", config.SOCKET_URL);
     if (io) return; // Já configurado
 
     const reqSocket = event.node.req.socket as any;
     if (!reqSocket?.server) return;
 
     console.log("🔌 Configurando Socket.IO");
-
-    const config = useRuntimeConfig();
 
     io = new SocketIOServer(reqSocket.server, {
       cors: {
